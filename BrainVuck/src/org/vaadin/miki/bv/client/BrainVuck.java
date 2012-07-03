@@ -1,14 +1,18 @@
 package org.vaadin.miki.bv.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -23,7 +27,12 @@ public class BrainVuck implements EntryPoint {
   private boolean codeChanged = true;
   
   private int getMemorySize() {
-    return 300;
+    try {
+      return Integer.parseInt(Window.Location.getParameter("memorySize"));
+    }
+    catch(Exception ex) {
+      return 500;
+    }
   }
   
   private int getPreviewSize() {
@@ -39,20 +48,24 @@ public class BrainVuck implements EntryPoint {
         grid.setHTML(1, zmp1-start+1, "<span class=\"vfCurrentMemory\">"+String.valueOf(zmp1)+"</span>");
         grid.setHTML(2, zmp1-start+1, "<span class=\"vfCurrentMemory\">"+String.valueOf(state.getMemory()[zmp1])+"</span>");        
       }
-      else {
+      else if(zmp1<state.getMemory().length){
         grid.setText(1, zmp1-start+1, String.valueOf(zmp1));
         grid.setText(2, zmp1-start+1, String.valueOf(state.getMemory()[zmp1]));
+      }
+      else {
+        grid.setText(1, zmp1-start+1, "-");
+        grid.setText(2, zmp1-start+1, "-");        
       }
     }
     // paint source code
     start = state.getCodePosition()<this.getPreviewSize()/2 ? 0 : state.getCodePosition()-this.getPreviewSize()/2;
     end = start+this.getPreviewSize();
     for(int zmp1=start; zmp1<end; zmp1++)
-      if(zmp1<state.getCode().length) grid.setHTML(0, zmp1-start+1, zmp1 == state.getCodePosition() ? "<span class=\"vfNextCode\">"+String.valueOf(state.getCode()[zmp1])+"</span>" : String.valueOf(state.getCode()[zmp1]));
+      if(zmp1<state.getCode().length) grid.setHTML(0, zmp1-start+1, zmp1 == state.getCodePosition() ? "<span class=\"vfNextCode\">"+SafeHtmlUtils.htmlEscape(state.getCode()[zmp1])+"</span>" : SafeHtmlUtils.htmlEscape(state.getCode()[zmp1]));
       else grid.setText(0, zmp1-start+1, "");
   }
   
-  private void setupInterpreter(final TextBox input, final Label output, final Label status, final TextArea code, final Grid memory) {
+  private void setupInterpreter(final TextBox input, final Label output, final Label status, final TextArea code, final Grid memory, final Button execute) {
     Brainfuck bf = new Brainfuck();
     InputProvider ip = new InputProvider() {
           public char getNextInput() {
@@ -75,17 +88,20 @@ public class BrainVuck implements EntryPoint {
       }
       
       public void error(Exception e) {        
-        status.setText("Error! "+e.getMessage());
         if(e instanceof State.ErrorState) {
+          status.setText("Error! "+e.getMessage());
           code.setCursorPos(((State.ErrorState)e).getCodePosition()+1);
           code.setFocus(true);
         }
+        else status.setText("Fatal error (not enough memory)! "+e.getMessage());
+        execute.setEnabled(true);
       }
       
       public void done() {
-        status.setText("Done execution in "+interpreter.getSteps()+" steps.");
+        status.setText("Done execution in "+(interpreter.getSteps()>9000 ? "over 9000" : interpreter.getSteps())+" steps.");
         
         paintPreviewInGrid(memory, interpreter.getState());
+        execute.setEnabled(true);
         // this will trigger code execution again on the next click, if the debug mode is on
         codeChanged = true;
       }
@@ -119,6 +135,10 @@ public class BrainVuck implements EntryPoint {
     grid.setHTML(2, 0, "<strong>Cell value</strong>");    
   }
   
+  private void addCodeSnippet(TextArea code, String snippet) {
+    code.setText(code.getText().substring(0, code.getCursorPos())+snippet+code.getText().substring(code.getCursorPos()));    
+  }
+  
   /**
    * This is the entry point method.
    */
@@ -128,20 +148,38 @@ public class BrainVuck implements EntryPoint {
     
     
     final TextArea code = new TextArea();
-    code.setText("++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.");
+    code.setText("++++[>++                +++<\n-]>[-<+>                ]<[>\n+++++>++                +++>\n        ++++                +>++\n        +++>                ++++\n        +>++                +++>\n        >+++                    ++<<\n        <<<<                    <<-]\n        ++++                    +>--\n            --------                ----\n            >--->---                ><<<\n            <[>>>>>+                >++>\n        >+++                    ++<<\n        <<<<                    <<-]\n        ++++                    ++++\n        [>>>                >>>>\n        ++++                >>++\n        ++++                ++<<\n<<<<<<<-                ]>.>\n.>.>.>.>                .>.>\n.>--.FTW                Miki");
+    //code.setText("++++[>+++++<-]>[-<+>]<[>+++++>+++++>+++++>+++++>+++++>+++++>>+++++<<<<<<<<-]+++++>-------------->--->---><<<<[>>>>>+>++>>+++++<<<<<<<<-]++++++++[>>>>>>>++++>>++++++++<<<<<<<<<-]>.>.>.>.>.>.>.>.>--.");
+    //code.setText("++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.");
     code.addStyleName("vfCode");
     code.addKeyPressHandler(new KeyPressHandler() {
       public void onKeyPress(KeyPressEvent event) {
         codeChanged = true;
       }
     });
-
-    Label outputCaption = new Label("Output: ");
-    outputCaption.addStyleName("vfLabel");
     
+    MenuBar snippets = new MenuBar();
+    snippets.setStyleName("menu");
+    String[] codes = new String[]{"Clear cell", "[-]", "Move/Add value to next", "[->+<]", "Move/Add value from next", ">[-<+>]<", "Copy value to next", "[->+>+<<]>>[-<<+>>]<<", "Go to next empty cell", "[>]", "Read all input", ",[>,]", "Write to output", ".[>.]"};
+    for(int zmp1=0; zmp1<codes.length; zmp1+=2) {
+      final String snip = codes[zmp1+1];
+      snippets.addItem(codes[zmp1], new Scheduler.ScheduledCommand() {
+        public void execute() {addCodeSnippet(code, snip);}      
+      });
+    }
+
     final Label output = new Label();
     output.addStyleName("vfOutput");
 
+    Label outputCaption = new Label("Output: ");
+    outputCaption.addStyleName("vfLabel");
+    outputCaption.setTitle("Click this label to flush the output.");
+    outputCaption.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        output.setText("");
+      }
+    });
+    
     Label memoryCaption = new Label("Memory preview:");
     memoryCaption.addStyleName("vfLabel");
 
@@ -160,9 +198,16 @@ public class BrainVuck implements EntryPoint {
           resetGrid(memory);
         }
         // if not debug mode, run
-        if(!debugMode)
-          interpreter.run(code.getText().toCharArray());
-        // if code changed, set it up
+        if(!debugMode) {
+          status.setText("Now executing. If you wrote bad code, it will freeze your browser.");
+          execute.setEnabled(false);
+          Scheduler.get().scheduleEntry(new Scheduler.ScheduledCommand() {            
+            public void execute() {
+              interpreter.run(code.getText().toCharArray());
+            }
+          });          
+        }
+          // if code changed, set it up
         else if(codeChanged) {
           if(interpreter.setCode(code.getText().toCharArray())) {
             codeChanged = false;
@@ -190,34 +235,47 @@ public class BrainVuck implements EntryPoint {
         resetGrid(memory);
       }
     });
+
+    final CheckBox memprev = new CheckBox("Show memory preview");
+    memprev.addStyleName("vfDebug");
+    memprev.addClickHandler(new ClickHandler() {      
+      public void onClick(ClickEvent event) {
+        RootPanel.get("memoryContainer").setVisible(memprev.getValue());
+      }
+    });
     
     final CheckBox debug = new CheckBox("Debug mode (step-by-step execution)");
     debug.addStyleName("vfDebug");
     debug.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         debugMode = debug.getValue();
-//        RootPanel.get("memoryContainer").setVisible(debugMode);
+        memprev.setValue(debugMode);
+        memprev.fireEvent(event);
       }
     });
+    
         
     // Add the nameField and sendButton to the RootPanel
     // Use RootPanel.get() to get the entire body element
+    RootPanel.get("codeContainer").add(snippets);
     RootPanel.get("codeContainer").add(code);    
     RootPanel.get("executeContainer").add(clear);
     RootPanel.get("executeContainer").add(execute);
     RootPanel.get("debugContainer").add(debug);
+    RootPanel.get("debugContainer").add(memprev);
     RootPanel.get("debugContainer").add(status);
     RootPanel.get("inputContainer").add(inputCaption);
     RootPanel.get("inputContainer").add(input);
     RootPanel.get("outputContainer").add(outputCaption);
     RootPanel.get("outputContainer").add(output);
+    RootPanel.get("memoryContainer").setVisible(false);
     RootPanel.get("memoryContainer").add(memoryCaption);
     RootPanel.get("memoryContainer").add(memory);
 
     // Focus the cursor on the name field when the app loads
     code.setFocus(true);
 
-    this.setupInterpreter(input, output, status, code, memory);
+    this.setupInterpreter(input, output, status, code, memory, execute);
     
   }
 }
