@@ -1,0 +1,175 @@
+/** Add css rules here for your application. */
+
+body {
+  background-color: silver;
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+}
+
+h1 {
+  font-size: 2em;
+  font-weight: bold;
+  color: #6699cc;
+  margin: 40px 0px 30px;
+  text-align: center;
+}
+
+#codeContainer {
+  width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#contents {
+  margin-left: auto;
+  margin-right: auto;
+  width: 600px;
+}
+
+#contents div {
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+
+.vfCode {
+  font-family: "Consolas", Courier, monospace;
+  font-weight: bold;
+  font-size: 14pt;
+  color: black;
+  letter-spacing: 2px;
+  border: 1px solid black;
+  width: 100%;
+  height: 200px;
+  padding: 10px;
+  background: white;
+}
+
+#inputContainer, #executeContainer {
+  clear: both;
+  float: left;
+  width: 300px;
+}
+
+#outputContainer, #debugContainer {
+  float: right;
+  width: 300px;
+}
+
+#memoryContainer {
+  clear: both;
+}
+
+.vfButton {
+  width: 120px;
+  height: 42px;
+  padding: 5px;
+  text-align: center;
+  font-size: 12pt;
+  letter-spacing: 1px;
+  border-top: 2px solid gray;
+  border-right: 2px solid black;
+  border-bottom: 2px solid black;
+  border-left: 2px solid gray;
+  background: #eeeeee;
+  color: black;
+}
+
+.vfButton:hover {
+  border: 2px solid red;
+}
+
+.vfExecute {
+  font-weight: bold;
+  margin-left: 3px;
+}
+
+.vfDebug {
+  font-size: 10pt;
+  font-style: italic;
+  color: gray;
+  text-align: right;
+  margin-left: 3px;
+}
+
+.vfDebug input {
+  border-top: 1px solid gray;
+  border-left: 1px solid gray;
+  border-bottom: 1px solid black;
+  border-right: 1px solid black;
+}
+
+.vfLabel {
+  font-size: 10pt;
+  font-style: italic;
+}
+
+.vfOutput {
+  font-size: 16pt;
+  color: #006600;
+}
+
+.vfInput {
+  width: 75%;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 5px;
+  border: 1px solid black;
+  font-family: Consolas, Courier, monospace;
+  font-size: 14pt;
+}
+
+.vfStatus {
+  clear: both;
+  text-align: center;
+  width: 95%;
+  font-size: 10pt;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  color: #660000; 
+}
+
+.vfMemory {
+  font-family: Consolas, Courier, monospace;
+  font-size: 10pt;
+}
+
+.vfMemory .vfNextCode,
+.vfMemory .vfCurrentMemory {
+  font-weight: bold;
+  color: yellow;
+  display: block;
+  background: black;
+  padding: 5px 0px;
+}
+
+.vfMemory td {
+  width: 5%;
+  padding: 5px 0px;
+  text-align: center;
+}
+
+.vfMemory td strong {
+  font-family: Tahoma, Verdana, Arial, sans-serif;
+  text-align: left;
+}
+
+#footer {
+  clear: both;
+  font-size: x-small;
+  color: gray;
+  font-style: italic;
+  text-align: center;
+}
+
+#footer a {
+  color: gray;
+  text-decoration: none;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+#footer a:hover {
+  color: black;
+  text-decoration: underline;
+}
